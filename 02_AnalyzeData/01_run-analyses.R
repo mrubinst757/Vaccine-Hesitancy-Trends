@@ -90,13 +90,13 @@ lincoms0 <- estimate_lincoms(reg0_coefs, reg0_vcov)
 lincoms1 <- estimate_lincoms(reg1_coefs, reg1_vcov)
 lincoms_unadj0 <- unadjusted_poisson_lincoms(data, fullvars, "age_race", "hesitant")
 
-write_csv(lincoms0$lincom_white, "03_Output/rr-by-age-race.csv")
-write_csv(lincoms0$lincom_young, "03_Output/arr-by-race.csv")
-write_csv(lincoms1$lincom_white, "03_Output/rr-by-age-race-unvaccinated.csv")
-write_csv(lincoms1$lincom_young, "03_Output/arr-by-race-unvaccinated.csv")
+write_csv(lincoms0$lincom_white, "02_Output/rr-by-age-race.csv")
+write_csv(lincoms0$lincom_young, "02_Output/arr-by-race.csv")
+write_csv(lincoms1$lincom_white, "02_Output/rr-by-age-race-unvaccinated.csv")
+write_csv(lincoms1$lincom_young, "02_Output/arr-by-race-unvaccinated.csv")
 lincoms_unadj0$lincom_white_unadj %>%
   bind_rows(lincoms_unadj0$lincom_young_unadj) %>%
-  write_csv("03_Output/age-race-lincoms-unadjusted.csv")
+  write_csv("02_Output/age-race-lincoms-unadjusted.csv")
 
 ###############################################################################################
 ################################ estimate time trends #########################################
@@ -152,4 +152,4 @@ aggregate_trends <- list(vacc_trend, educ_trend, vote_trend, race_trend, region_
        ~mutate(.x, variable = .y)) %>%
   invoke(rbind, .)
 
-saveRDS(aggregate_trends, "03_Output/trend-paper-hesitancy-trends.rds")
+saveRDS(aggregate_trends, "02_Output/trend-paper-hesitancy-trends.rds")
