@@ -58,6 +58,3 @@ data.0121 <- process_data(signal1, signal2, "2020-12-31", "2021-01-31")
 data.0221 <- process_data(signal1, signal2, "2021-01-31", "2021-02-28")
 data.0321 <- process_data(signal1, signal2, "2021-02-28", "2021-03-31")
 data.0421 <- process_data(signal1, signal2, "2021-03-31", "2021-04-30")
-
-march <- readRDS("../00_RawData/other/covidcast-usafacts-2021-03-31.rds")
-feb <- readRDS("../00_RawData/other/covidcast-usafacts-2021-02-28.rds")
