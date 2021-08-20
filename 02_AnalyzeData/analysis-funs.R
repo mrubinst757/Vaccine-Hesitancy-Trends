@@ -549,6 +549,7 @@ sample_characteristics <- function(data) {
   # age stats
   age_dat <- filter(data, age_cat != 199)
   age <- matrixStats::weightedMedian(age_dat$age_cat, age_dat$weight)
+  age_75 <- weighted.mean(age_dat$age_cat == 7, age_dat$weight)
   
   # gender stats
   gender_dat <- filter(data, gender != 199)
@@ -581,6 +582,7 @@ sample_characteristics <- function(data) {
   
   tibble(
     `Median age` = age,
+    `75 or older` = 100*age_75,
     `% male` = 100*male,
     `% female` = 100*female,
     `% non-binary` = 100*nonb,
@@ -634,14 +636,15 @@ sample_flow <- function(trend_data, month_data) {
     mutate(missing_y = map(data, ~mutate(.x, missing_y = is.na(hesitant)) %>%
                              .$missing_y %>% sum())) %>%
     mutate(selfdesc = map(data, ~mutate(.x, selfdesc = ifelse(gender == 4, 1, 0)) %>%
-                            .$selfdesc %>% sum())) %>%
-    select(original, missing_y, selfdesc)
+                            filter(!is.na(hesitant)) %>%
+                            .$selfdesc %>% sum()),
+           final = map(data, ~nrow(filter(.x, gender != 4, !is.na(hesitant))))) %>%
+    select(original, missing_y, selfdesc, final)
   
   table_one <- excluded %>%
-    set_names(c("Original N", "Missing Intent", "Self-describe")) %>%
+    set_names(c("Original N", "Missing Intent", "Self-describe", "Final")) %>%
     as_tibble() %>%
     unnest() %>%
-    mutate(`Final N` = `Original N` - `Missing Intent` - `Self-describe`) %>%
     mutate(Month = c("January", "February", "March", "April", "May")) %>%
     cbind(
       tibble(

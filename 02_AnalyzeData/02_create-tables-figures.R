@@ -1,5 +1,7 @@
-source("02_AnalyzeData/trends-paper/analysis-funs.R")
-source("02_AnalyzeData/trends-paper/table-funs.R")
+source("01_RPrograms/trends-paper/02_AnalyzeData/analysis-funs.R")
+source("01_RPrograms/trends-paper/02_AnalyzeData/table-funs.R")
+
+out_dir <- "C:/Users/mdrub/Box/Vaccine-Intent-Project/trends-paper/"
 
 # specify formatting options (table ordering) ---------------------------------------------------
 codebook <- read_csv("../00_RawData/codebook/codebook-interactions.csv")
@@ -29,8 +31,6 @@ final_order1 <- main_order[1:length(final_table1)]
 final_order2 <- main_order[(length(final_table1) + 1):(length(final_table1) + length(final_table2))]
 final_order3 <- main_order[length(main_order) - 2]
 
-out_dir <- "C:/Users/mdrub/Box/Vaccine-Intent-Project/trends-paper/"
-
 #########################################################################################
 ############################### hesitancy tables ########################################
 #########################################################################################
@@ -41,9 +41,10 @@ main_model_results <- read_csv("02_Output/model-results.csv")
 main_model_results.a <- read_csv("02_Output/model-results-a.csv") 
 sens_model_results <- read_csv("02_Output/model-results-sens.csv") 
 sens_model_results.a <- read_csv("02_Output/model-results-sens-a.csv") 
+
 full_table_main <- process_table(main_xtabs, codebook, fullvars, "Race and Ethnicity|diagnosed") %>%
   final_process(main_model_results, main_model_results.a, ., codebook)
-sens_table_main <- process_table(sens_xtabs, codebook, fullvars, "Race and Ethnicity|diagnosed") %>%
+full_table_sens <- process_table(sens_xtabs, codebook, fullvars, "Race and Ethnicity|diagnosed") %>%
   final_process(sens_model_results, sens_model_results.a, ., codebook)
 
 write_rds(full_table_main, "02_Output/full-results.rds")
@@ -60,7 +61,7 @@ health_table <- process_table(main_xtabs, codebook, fullvars, "Race and Ethnicit
 # complete results
 gtsave(complete_gt_table(full_table_main, main_order), 
        paste0(out_dir, "complete-results/risk-table.html"))
-gtsave(complete_gt_table(full_table_sens, main_order, outcome = "Probably "), 
+gtsave(complete_gt_table(sens_table_main, main_order, outcome = "Probably "), 
        paste0(out_dir, "complete-results/risk-table-sens.html"))
 
 # paper tables
@@ -108,7 +109,7 @@ figure_three_data <- full_table_main %>%
   mutate(Hesitancy = as.numeric(Hesitancy)) %>%
   filter(!grepl("collapsed", Characteristic))
 
-figure3 <- create_figure_three(plot.dat.full)
+figure3 <- create_figure_three(figure_three_data)
 
 ggsave(figure3,
        filename = paste0(out_dir, "figures/figure-3.tiff"), 
@@ -236,7 +237,6 @@ reason_values <- read_csv("../00_RawData/codebook/hesitancy-reasons.csv") %>%
 defno <- filter(may_data, vaccine_intent == 4) 
 probno <- filter(may_data, vaccine_intent == 3)
 probyes <- filter(may_data, vaccine_intent == 2)
-pyes1 <- filter(may_data, vaccine_intent == 2)
 
 # combine stratified data for marginal totals
 marg <- rbind(defno, probno, probyes)
@@ -305,6 +305,8 @@ characteristics_table <- sample_characteristics(filter(may_data, !is.na(hesitant
 troll_characteristics <- sample_characteristics(possible_trolls)
 flow_table <- sample_flow(trend_data, may_data)
 
-gtsave(gt(flow_table), paste0(out_dir, "tables/sample-flow.html"))
 gtsave(gt(characteristics_table), paste0(out_dir, "tables/sample-characteristics.html"))
 gtsave(gt(troll_characteristics), paste0(out_dir, "tables/troll-characteristics.html"))
+gtsave(gt(flow_table), paste0(out_dir, "tables/sample-flow.html"))
+
+

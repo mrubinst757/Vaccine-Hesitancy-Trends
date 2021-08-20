@@ -4,7 +4,7 @@
 # date modified: may 5, 2021
 
 # read libraries ----------------------------------------------------------------------------------------
-source("01_ProcessData/data-process-funs.R")
+source("01_RPrograms/trends-paper/01_ProcessData/data-process-funs.R")
 
 # create trend data file --------------------------------------------------------------------------
 date_start <- c("2021-01-06", "2021-02-01", "2021-03-01", "2021-04-01", "2021-05-01")

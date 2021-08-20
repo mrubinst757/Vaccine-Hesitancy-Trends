@@ -20,6 +20,7 @@ extrafont::loadfonts(device = "win")
 process_rdtab <- function(table_output, crosswalk, codebook) {
   table_output %>%
     invoke(rbind, .) %>%
+    filter(!is.na(props)) %>%
     mutate_at("se", as.numeric) %>%
     left_join(crosswalk, by = c("label" = "new_varname")) %>%
     left_join(codebook, by = "variable_name") %>%
@@ -43,6 +44,7 @@ process_rdtab <- function(table_output, crosswalk, codebook) {
 process_rrtab <- function(tab_output, fullvars, codebook) {
   tab_output %>%
     invoke(rbind, .) %>%
+    filter(!is.na(rr)) %>%
     mutate_at("se", as.numeric) %>%
     left_join(fullvars, by = c("label" = "new_varname")) %>%
     left_join(codebook, by = "variable_name") %>%
@@ -77,16 +79,17 @@ process_table <- function(crosstabs, codebook, crosswalk, order_cats) {
   rrtabf <- left_join(rrtab1, rrtab2, by = c("Characteristic", "Category"))
   
   rdtabf <- rdtab %>%
-    left_join(rrtabf) %>%
+    left_join(rrtabf, by = c("Characteristic", "Category")) %>%
     replace_na(list(ci.x = "1.0 (NA)", ci.y = "1.0 (NA)")) %>%
     group_by(Characteristic) %>%
     mutate(cat_pct1 = format(round(100*N.x/sum(N.x), 1), nsmall = 1), 
            cat_pct2 = format(round(100*N.y/sum(N.y), 1), nsmall = 1)) %>%
     ungroup() %>%
     mutate(reorder = ifelse(grepl(order_cats, Characteristic), 1, 0)) %>%
-    nest(-reorder) %>%
+    nest(data = c(Characteristic, Category, N.x, reference, `Proportion (CI).x`, 
+                  N.y, `Proportion (CI).y`, ci.x, ci.y, cat_pct1, cat_pct2)) %>%
     mutate(data = ifelse(reorder == 1, map(data, ~.x %>% group_by(Characteristic) %>% arrange(-N.x)), data)) %>%
-    unnest() %>%
+    unnest(cols = c(data)) %>%
     select(-reorder) %>%
     mutate_if(is.character, ~gsub("\\( ", "\\(", .))
 }
@@ -192,7 +195,7 @@ final_gt_table <- function(table, row_order, outcome = "Hesitant ", hesitant.onl
     select(Characteristic, Category) %>%
     filter(Characteristic %in% row_order) %>%
     mutate(id = 1:nrow(.)) %>%
-    nest(-Characteristic) 
+    nest(data = c(Category, id)) 
   
   char.list <- map(char.df$data, ~.x$id)
   group.list <- char.df$Characteristic
@@ -253,7 +256,7 @@ final_gt_table <- function(table, row_order, outcome = "Hesitant ", hesitant.onl
 #' @return gt table with tabs for categorical variables
 add_gt_rows <- function(gttable, group, row_ids) {
   final <- gttable %>%
-    tab_row_group(group = group, rows = row_ids)
+    tab_row_group(label = group, rows = row_ids)
   final
 } 
 

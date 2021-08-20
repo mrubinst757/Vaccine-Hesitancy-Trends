@@ -217,7 +217,7 @@ final_process <- function(basic_data, covid_cases) {
     add_xwalk_interaction("ethnicity_race", "age_cat2", "age_race2") 
   
   #- quick check on number of NA-age with present race info
-  subset1 <- filter(res, !is.na(hesitant))
+  subset1 <- filter(res, !is.na(hesitant), gender != 4)
   races <- filter(fullvars, variable_name == "ethnicity_race")
   repls <- races$label_full
   names(repls) <- races$value
@@ -234,7 +234,7 @@ final_process <- function(basic_data, covid_cases) {
     summarize_if(is.numeric, sum)
   
   # write the number of recoded present race to missing (because of missing age)
-  write.table(misstab, "C:/Users/mdrub/Dropbox/Delphi/01_Analysis/race-missing-age.txt", row.names = FALSE)
+  write_csv(misstab, "C:/Users/mdrub/Dropbox/Delphi/01_Analysis/race-missing-age.csv")
   
   # recode missing age to missing race
   res <- res %>%
