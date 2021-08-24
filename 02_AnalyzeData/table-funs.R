@@ -396,8 +396,8 @@ create_figure_one <- function(trend_data) {
     geom_bar(stat = "identity", position = "stack") +
     geom_errorbar(stat = "identity", width = 0.2) +
     scale_fill_manual(values = rev(option1)) +
-    ylab("Vaccine hesitant (weighted %)") +
-    xlab("Month") +
+    ylab("Vaccine intent (%; 95% CI error bars)") +
+    xlab("") +
     theme_minimal() +
     labs(fill = "Would you take \n the COVID-19 \n vaccine if offered \n today?") +
     theme(text = element_text(size = 14, family = "Arial", color = "Black"),
@@ -414,7 +414,7 @@ create_figure_one <- function(trend_data) {
 #' @param ymax maximum value on y-axis
 #'
 #' @return ggplot output
-create_figure_two <- function(plot.data, category, palette, ymax) {
+create_figure_two <- function(plot.data, category, palette, ymax, fullvars) {
   my_levels <- fullvars %>%
     filter(variable_name == category) %>%
     .$label_full
@@ -431,7 +431,7 @@ create_figure_two <- function(plot.data, category, palette, ymax) {
     scale_color_brewer(palette = palette) +
     facet_wrap(~variable_name_full) +
     ylab("Vaccine hesitant (%)") +
-    xlab("Month") +
+    xlab("") +
     scale_x_date(breaks = "1 month", date_labels = "%B") +
     theme_minimal() +
     scale_shape_manual(values=c(5:shapes)) +
@@ -478,7 +478,7 @@ create_figure_three <- function(plot_data) {
     geom_point() +
     geom_errorbar(aes(xmin = l95ci, xmax = u95ci)) +
     theme_minimal() +
-    xlab("Vaccine hesitant (%) \n (95% CI errorbars)") +
+    xlab("Vaccine hesitant (%; 95% CI error bars)") +
     ylab("Age") +
     labs(title = "Race/ethnicity") +
     theme(plot.title = element_text(hjust = 0.5)) +

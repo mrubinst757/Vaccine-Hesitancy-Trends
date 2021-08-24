@@ -155,6 +155,7 @@ option1 <- RColorBrewer::brewer.pal(8, "Paired")[c(6,5,3,4,7)]
 
 # figure 1: hesitancy and vaccination status over time
 figure1 <- create_figure_one(trend_data)
+
 ggsave(figure1, height = 5, width = 7, dpi = 300,
        filename = paste0(out_dir, "figures/figure-1.tiff"))
 
@@ -197,19 +198,26 @@ for(i in 1:length(group_rows)) {
 gtsave(supp_table2_gt, paste0(out_dir, "tables/supp-table-2.html"))
 
 # create figure 2: trends by category
+fullvars1 <- fullvars %>% select(label_full, new_varname, variable_name) %>%
+  mutate_at("label_full", ~gsub("PhD", "Doctorate", .))
+
+codebook1 <- codebook %>%
+  mutate_at("variable_name_full", ~gsub("US Region", "US region", .))
+
 plot_data <- trend_data %>%
   filter(!variable %in% c("vaccine_intent", "all"), !grepl("199|NA|^region$|region_6|ethnicity_race_7", label),
          month %in% c(1:5)) %>%
   mutate_at("month", ~month.name[.]) %>%
   mutate_at("month", ~factor(., levels = c("January", "February", "March", 
                                            "April", "May"))) %>%
-  left_join(fullvars %>% select(label_full, new_varname), by = c("label" = "new_varname")) %>%
-  left_join(codebook, by = c("variable" = "variable_name"))
+  left_join(fullvars1, by = c("label" = "new_varname")) %>%
+  left_join(codebook1 %>% select(variable_name, variable_name_full), by = c("variable" = "variable_name")) %>%
+  mutate_at("label_full", ~gsub("PhD", "Doctorate", .)) 
 
-plot1 <- create_figure_two(plot_data, "ethnicity_race", "Set1", 60)
-plot2 <- create_figure_two(plot_data, "rep_lead_ntile", "Set1", 45)
-plot3 <- create_figure_two(plot_data, "region", "Set1", 45)
-plot4 <- create_figure_two(plot_data, "educ", "Set1", 45)
+plot1 <- create_figure_two(plot_data, "ethnicity_race", "Set1", 60, fullvars1)
+plot2 <- create_figure_two(plot_data, "rep_lead_ntile", "Set1", 45, fullvars1)
+plot3 <- create_figure_two(plot_data, "region", "Set1", 45, fullvars1)
+plot4 <- create_figure_two(plot_data, "educ", "Set1", 45, fullvars1)
 
 saveRDS(list(plot1, plot4, plot3, plot2), "02_Output/trends-paper-trend-plots.RDS")
 main_plots <- readRDS("02_Output/trends-paper-trend-plots.RDS")
