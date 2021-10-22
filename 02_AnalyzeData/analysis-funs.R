@@ -393,7 +393,6 @@ unadjusted_poisson_lincoms <- function(data, fullvars, group, outcome) {
        lincom_young_unadj = lincom_young_unadj)
 }
 
-
 #########################################################################################
 ############################# time trend analysis functions #############################
 #########################################################################################
@@ -539,8 +538,9 @@ reasons_table <- function(data, label) {
     rename(!!paste0(label, " \n N = ", num) := reason_no)
 }
 
-#' sample_characteristics: takes analytic file and outputs sample characteristics,
-#' removing non-response categories from percentages
+#' sample_characteristics: takes analytic file and outputs summary sample 
+#' characteristics (in contrast to sample_characteristics_alll), removing 
+#' non-response from percentages
 #'
 #' @param data analytic file
 #'
@@ -670,3 +670,57 @@ sample_flow <- function(trend_data, month_data) {
   
   print(table_one)
 }
+
+#' sample_chars_all: calculates percentage of observations within each demographic
+#' cell for each variable from January through May
+#'
+#' @param trend_data survey results nested by month
+#' @param missing_values option to remove missing values from cell percentages
+#'
+#' @return dataframe containing cell percentages by demographic category by month
+sample_characteristics_all <- function(trend_data, missing_values) {
+  
+  sample_characteristics_full <- function(data, variable, group_values, missing_values = TRUE) {
+    rm_miss <- function(data) {
+      data[data[[variable]] != 199]
+    }
+    if (missing_values) {
+      means <- unlist(map(group_values, ~weighted.mean(data[[variable]] == .x, data$weight)))
+    }
+    if (!missing_values) {
+      data <- data %>%
+        mutate(ethnicity_race = ifelse(ethnicity_race == 7, 199, ethnicity_race))
+      
+      means <- unlist(map(group_values, ~weighted.mean(rm_miss(data)[[variable]] == .x, rm_miss(data)$weight)))
+    }
+    
+    tibble(
+      variable = variable,
+      value = group_values,
+      means = means
+    )                
+  }
+  
+  iter_trends <- function(data_list, variable, missing_values) {
+    map(data_list, ~sample_characteristics_full(.x, variable, unique(.x[[variable]]),
+                                                missing_values)) %>%
+      map2(c("January", "February", "March", "April", "May"), ~mutate(.x, month = .y)) %>%
+      invoke(rbind, .)
+  }
+  
+  map(c("gender", "age_cat", "ethnicity_race", "educ", "emp_out"), 
+      ~iter_trends(trend_data$data, .x, missing_values)) %>%
+    invoke(rbind, .) %>%
+    spread(month, means) %>%
+    mutate_at("variable", ~factor(., levels = c("gender", "age_cat", "ethnicity_race", "educ", "emp_out"))) %>%
+    arrange(variable) %>%
+    mutate_at("value", as.character) %>%
+    left_join(codebook, by = c("variable" = "variable_name")) %>%
+    left_join(fullvars, by = c("variable" = "variable_name", "value")) %>%
+    select(Variable = description, Description = label_full, January, February, March, April, May) %>%
+    mutate_if(is.numeric, ~round(100*., 2)) %>%
+    select(-Variable)
+}
+
+
+

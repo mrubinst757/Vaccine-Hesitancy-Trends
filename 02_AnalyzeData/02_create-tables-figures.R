@@ -302,19 +302,39 @@ supp_table_8 %>%
 ########################################################################################
 ############################## sample characteristics ##################################
 ########################################################################################
-trend_data <- readRDS("../00_RawData/processed-data/jan-may-trendsdata.rds") 
 
+# calculate summary sample characteristics
 may_data <- readRDS("../00_RawData/processed-data/may-data-08-16-2021.rds")
 
 possible_trolls <- readRDS("../00_RawData/processed-data/may-data-08-16-2021.rds") %>%
   filter(!is.na(intent_binary), gender == 4) 
-
+ 
 characteristics_table <- sample_characteristics(filter(may_data, !is.na(hesitant), gender != 4))
+
 troll_characteristics <- sample_characteristics(possible_trolls)
+
 flow_table <- sample_flow(trend_data, may_data)
 
 gtsave(gt(characteristics_table), paste0(out_dir, "tables/sample-characteristics.html"))
 gtsave(gt(troll_characteristics), paste0(out_dir, "tables/troll-characteristics.html"))
 gtsave(gt(flow_table), paste0(out_dir, "tables/sample-flow.html"))
 
+# calculate detailed sample characteristics by month
+trend_data <- readRDS("../00_RawData/processed-data/jan-may-trendsdata.rds") %>%
+  filter(!is.na(hesitant), gender != 4) %>%
+  replace_na(list(emp_out = 199, gender = 199, age_cat = 199, 
+                  ethnicity_race = 199, educ = 199)) %>%
+  nest(-month) 
 
+chars_table_subs <- sample_chars_all(trend_data, missing_values = FALSE)
+
+chars_table_subs <- chars_table_subs %>%
+  filter(!grepl("[nN]o response", Description)) %>%
+  gt(rowname_col = "Description") %>%
+  tab_row_group("Employment status", rows = c(24:26)) %>%
+  tab_row_group("Education level", rows = c(18:23)) %>%
+  tab_row_group("Race/ethnicity", rows = c(11:17)) %>%
+  tab_row_group("Age group", rows = c(4:10)) %>%
+  tab_row_group("Gender", rows = c(1:3))
+
+gtsave(chars_table_subs, paste0(out_dir, "tables/sample-characteristics-trends-revised-missing-rm.html"))
